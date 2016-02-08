@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link href="style.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script type ="text/javascript" src="/socket.io/socket.io.js"></script>
+    <script src="https://use.typekit.net/fuc1ctg.js"></script>
+    <script>try{Typekit.load({ async: true });}catch(e){}</script>
+
+    <script>
+
+      $(document).ready(function() {
+        var socket = io.connect();
+        var my_name = prompt("What's your name, good looking?");
+        var user_data = {};
+        user_data["name"] = my_name;
+        console.log(user_data);
+
+        socket.emit("requestMessages", user_data);
+
+        socket.on('connect', function (data) {
+          console.log('BROWSER::WE ARE USING SOCKETS!');
+        })
+        socket.on("returnMessages", function(data) {
+          var allMessages = data.message;
+          for (var i = 0; i < allMessages.length; i++) {
+            var newChat = "<p>" + allMessages[i] + "</p>";
+            $("#chat_window").append(newChat);
+            $("#chat_window").scrollTop($("#chat_window")[0].scrollHeight);
+          }
+          // console.log(allMessages);
+        })
+
+        socket.on("returnUsers", function(data) {
+          console.log(data.users);
+          var users = data.users;
+          var newUser = users[0].name;
+          for (var i = 1; i < users.length; i++) {
+            newUser += "<p>" + users[i].name + "</p>";
+          }
+          $("#userList").html(newUser);
+        })
+
+        socket.on('newMessage', function(data) {
+          var name = data.name;
+          var message = data.message;
+          var newChat = "<p>" + name + ": " + message + "</p>";
+          $("#chat_window").append(newChat);
+          $("#chat_window").scrollTop($("#chat_window")[0].scrollHeight);
+          // console.log(newChat);
+        })
+
+        $('#chat_sender').click(function(){
+          var myMessage = $("#chat_input").val();
+          var chatMessage = {};
+          chatMessage["name"] = my_name;
+          chatMessage["message"] = myMessage;
+          socket.emit("message", chatMessage);
+          // console.log(chatMessage);
+          $(this).closest('form').find("input[type=text], textarea").val("");
+          return false;
+        });
+
+      });
+
+    </script>
+  </head>
+  <body>
+
+    <h1> Conversation Board </h1>
+
+    <div id="chat">
+
+      <div id="chat_window"></div>
+
+      <form id="chat_form">
+
+        <input type="text" id="chat_input" placeholder="Enter your message!">
+
+        <div id="alignment">
+          <input type="submit" class="submit" value="submit" id="chat_sender">
+        </div>
+
+      </form>
+
+    </div>
+
+    <div id="users">
+      <h3>Roll Call</h3>
+      <div id="userList"></div>
+    </div>
+
+  </body>
+</html>
